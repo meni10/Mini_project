@@ -1,0 +1,2330 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gmail Email Assistant - AI Powered</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="{% static 'inbox/style.css' %}" />
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="{% static 'images/favicon.ico' %}"
+    />
+    <style>
+      /* Custom styles for smaller sidebar */
+      .sidebar-sm {
+        width: 60px !important;
+        transition: width 0.3s;
+      }
+      .sidebar-sm .nav-link {
+        padding: 0.5rem;
+        text-align: center;
+      }
+      .sidebar-sm .nav-link span {
+        display: none;
+      }
+      .sidebar-sm .logo-icon {
+        margin: 0 auto;
+      }
+      .sidebar-sm .fs-4 {
+        display: none;
+      }
+      .sidebar-sm:hover {
+        width: 200px !important;
+      }
+      .sidebar-sm:hover .nav-link span {
+        display: inline;
+      }
+      .sidebar-sm:hover .fs-4 {
+        display: block;
+      }
+      .main-content {
+        margin-left: 60px !important;
+        transition: margin-left 0.3s;
+      }
+      .sidebar-sm:hover ~ .main-content {
+        margin-left: 200px !important;
+      }
+      /* Make email sections more spacious */
+      .email-section {
+        min-height: 500px;
+      }
+      .email-list {
+        max-height: 600px;
+        overflow-y: auto;
+      }
+      .email-item {
+        margin-bottom: 10px;
+        position: relative; /* Added for absolute positioning of mark as read button */
+        padding-right: 100px; /* Make space for button */
+      }
+      .email-actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+      /* Fixed styles for mark as read button to match the design */
+      .email-item .mark-read-btn {
+        position: absolute !important;
+        top: 10px !important;
+        right: 10px !important;
+        z-index: 10 !important;
+        background-color: transparent !important;
+        border: 1px solid #28a745 !important;
+        color: #28a745 !important;
+        font-size: 12px !important;
+        padding: 4px 8px !important;
+        border-radius: 4px !important;
+        cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        transition: all 0.2s ease !important;
+      }
+      .email-item .mark-read-btn i {
+        color: inherit !important;
+        font-size: 10px !important;
+      }
+      .email-item .mark-read-btn:hover {
+        background-color: rgba(40, 167, 69, 0.1) !important;
+      }
+      /* Dark theme adjustments for mark as read button */
+      body.dark-theme .email-item .mark-read-btn {
+        border-color: #4caf50 !important;
+        color: #81c784 !important;
+      }
+      body.dark-theme .email-item .mark-read-btn:hover {
+        background-color: rgba(76, 175, 80, 0.2) !important;
+      }
+      /* Custom styles to reduce gaps in the Generate Reply section */
+      .generate-reply-section .form-label {
+        margin-bottom: 0.25rem; /* Reduce label margin */
+      }
+      .generate-reply-section .form-select,
+      .generate-reply-section .form-control {
+        margin-bottom: 0.25rem; /* Reduce form element margin */
+      }
+      .generate-reply-section .btn {
+        margin-bottom: 0.25rem; /* Reduce button margin */
+      }
+      /* Remove gap between tone selector and buttons */
+      .tone-selector-container {
+        margin-bottom: 0 !important;
+      }
+      .buttons-container {
+        margin-top: 0 !important;
+        margin-bottom: 0.5rem !important;
+        gap: 0.5rem !important; /* Reduce gap between buttons */
+      }
+      /* Reduce button padding to make them more compact */
+      .compact-btn {
+        padding: 0.375rem 0.75rem !important;
+      }
+      /* Extended email text box */
+      .email-text-extended {
+        min-height: 300px !important;
+        resize: vertical !important;
+      }
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .email-item {
+          padding-right: 80px;
+        }
+        .email-item .mark-read-btn {
+          font-size: 10px !important;
+          padding: 2px 6px !important;
+        }
+        .buttons-container {
+          flex-direction: column !important;
+        }
+        .compact-btn {
+          width: 100% !important;
+        }
+        .email-text-extended {
+          min-height: 200px !important;
+        }
+      }
+      /* Voice Feedback Styles */
+      #voice-feedback {
+        min-width: 300px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        animation: slideDown 0.3s ease-out;
+      }
+      @keyframes slideDown {
+        from {
+          transform: translate(-50%, -100%);
+          opacity: 0;
+        }
+        to {
+          transform: translate(-50%, 0);
+          opacity: 1;
+        }
+      }
+      #voice-feedback.listening {
+        border-left: 4px solid #28a745;
+      }
+      #voice-feedback.processing {
+        border-left: 4px solid #007bff;
+      }
+      #voice-feedback.error {
+        border-left: 4px solid #dc3545;
+      }
+      /* Voice button active state */
+      #voice-action-btn.active {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+      }
+      #voice-action-btn.active i {
+        color: #28a745;
+        animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+      /* Voice Help Modal Styles */
+      #voiceHelpModal .modal-body {
+        text-align: center;
+      }
+      #voiceHelpModal .list-group-item {
+        border-left: 4px solid #007bff;
+        margin-bottom: 0.5rem;
+      }
+      #voiceHelpModal .list-group-item strong {
+        color: #007bff;
+      }
+      /* Dark theme styles for voice help modal */
+      body.dark-theme #voiceHelpModal .modal-content {
+        background-color: #1e1e1e !important;
+        border-color: #333 !important;
+      }
+      body.dark-theme #voiceHelpModal .modal-header {
+        background-color: #2c2c2c !important;
+        border-bottom-color: #444 !important;
+      }
+      body.dark-theme #voiceHelpModal .modal-footer {
+        background-color: #2c2c2c !important;
+        border-top-color: #444 !important;
+      }
+      body.dark-theme #voiceHelpModal .modal-title {
+        color: #ffffff !important;
+      }
+      body.dark-theme #voiceHelpModal .list-group-item {
+        background-color: #2a2a2a !important;
+        border-color: #444 !important;
+        color: #e0e0e0 !important;
+      }
+      body.dark-theme #voiceHelpModal .list-group-item strong {
+        color: #4dabf7 !important;
+      }
+      /* Professional tooltip styling */
+      .tooltip {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 0.75rem;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      .tooltip-inner {
+        background-color: #333;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 6px;
+      }
+      body.dark-theme .tooltip-inner {
+        background-color: #444;
+        color: #fff;
+      }
+      .tooltip-arrow {
+        display: none;
+      }
+      /* Custom styles for new features */
+      .important-star {
+        color: #ffc107;
+        cursor: pointer;
+        font-size: 1.2rem;
+        opacity: 1;
+        transition: all 0.2s ease;
+      }
+      .important-star:hover {
+        opacity: 1;
+      }
+      .important-star.active {
+        color: #ffc107;
+        opacity: 1;
+      }
+      .draft-item {
+        border-bottom: 1px solid #eee;
+        padding: 10px 0;
+      }
+      .draft-item:last-child {
+        border-bottom: none;
+      }
+      .settings-section {
+        display: none;
+      }
+      .settings-section.active {
+        display: block;
+      }
+      .section-content {
+        display: none;
+      }
+      .section-content.active {
+        display: block;
+      }
+      /* Dark mode styles */
+      body.dark-theme {
+        background-color: #121212;
+        color: #e0e0e0;
+      }
+      body.dark-theme .card {
+        background-color: #1e1e1e;
+        border-color: #333;
+      }
+      body.dark-theme .card-header {
+        background-color: #2c2c2c;
+        border-color: #444;
+      }
+      body.dark-theme .form-control,
+      body.dark-theme .form-select {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #e0e0e0;
+      }
+      body.dark-theme .list-group-item {
+        background-color: #2a2a2a;
+        border-color: #444;
+        color: #e0e0e0;
+      }
+      body.dark-theme .modal-content {
+        background-color: #1e1e1e;
+        border-color: #333;
+      }
+      body.dark-theme .modal-header,
+      body.dark-theme .modal-footer {
+        background-color: #2c2c2c;
+        border-color: #444;
+      }
+      body.dark-theme .dropdown-menu {
+        background-color: #2c2c2c;
+        border-color: #444;
+      }
+      body.dark-theme .dropdown-item {
+        color: #e0e0e0;
+      }
+      body.dark-theme .dropdown-item:hover {
+        background-color: #3a3a3a;
+        color: #fff;
+      }
+
+      /* Star button styling - completely redesigned for visibility */
+      .star-btn {
+        background-color: #f8f9fa !important;
+        border: 1px solid #dee2e6 !important;
+        color: #6c757d !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+        font-size: 14px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+
+      .star-btn:hover {
+        background-color: #e9ecef !important;
+        border-color: #adb5bd !important;
+        color: #495057 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important;
+      }
+
+      .star-btn.active {
+        background-color: #ffc107 !important;
+        border-color: #ffc107 !important;
+        color: #000 !important;
+        box-shadow: 0 2px 5px rgba(255,193,7,0.3) !important;
+      }
+
+      .star-btn i {
+        transition: color 0.2s ease !important;
+      }
+
+      /* White star icon when active */
+      .star-btn.active i {
+        color: white !important;
+      }
+
+      /* Dark theme adjustments for star button */
+      body.dark-theme .star-btn {
+        background-color: #495057 !important;
+        border-color: #6c757d !important;
+        color: #adb5bd !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+      }
+
+      body.dark-theme .star-btn:hover {
+        background-color: #6c757d !important;
+        border-color: #adb5bd !important;
+        color: #f8f9fa !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.4) !important;
+      }
+
+      body.dark-theme .star-btn.active {
+        background-color: #ffca28 !important;
+        border-color: #ffca28 !important;
+        color: #000 !important;
+        box-shadow: 0 2px 5px rgba(255,202,40,0.4) !important;
+      }
+
+      /* White star icon when active in dark theme */
+      body.dark-theme .star-btn.active i {
+        color: white !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Sidebar Navigation (Smaller) -->
+        <div
+          class="col-md-1 col-lg-1 bg-dark text-white px-0 vh-100 position-fixed sidebar-sm"
+        >
+          <div class="d-flex flex-column p-2">
+            <!-- Logo -->
+            <div class="d-flex align-items-center mb-4">
+              <div class="logo-icon">
+                <i class="fas fa-envelope text-white fs-5"></i>
+              </div>
+              <span class="fs-6 fw-bold">Email Assistant</span>
+            </div>
+            <!-- Navigation -->
+            <ul
+              class="nav nav-pills flex-column mb-auto"
+              role="navigation"
+              aria-label="Main navigation"
+            >
+              <li class="nav-item">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-link active text-white"
+                  onclick="showSection('inbox')"
+                  role="menuitem"
+                  aria-current="page"
+                  title="Inbox"
+                >
+                  <i class="fas fa-inbox"></i>
+                  <span class="ms-2">Inbox</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-link text-white"
+                  onclick="showSection('drafts')"
+                  role="menuitem"
+                  title="Drafts"
+                >
+                  <i class="fas fa-file-alt"></i>
+                  <span class="ms-2">Drafts</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-link text-white"
+                  onclick="showSection('important')"
+                  role="menuitem"
+                  title="Important"
+                >
+                  <i class="fas fa-star"></i>
+                  <span class="ms-2">Important</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-link text-white"
+                  onclick="showSection('settings')"
+                  role="menuitem"
+                  title="Settings"
+                >
+                  <i class="fas fa-cog"></i>
+                  <span class="ms-2">Settings</span>
+                </a>
+              </li>
+              <!-- Voice Command Dropdown -->
+              <li class="nav-item dropdown">
+                <a
+                  class="nav-link dropdown-toggle text-white"
+                  href="#"
+                  id="voiceDropdown"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  title="Voice Commands"
+                >
+                  <i class="fas fa-microphone"></i>
+                  <span class="ms-2">Voice</span>
+                </a>
+                <ul
+                  class="dropdown-menu dropdown-menu-dark"
+                  aria-labelledby="voiceDropdown"
+                >
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="javascript:void(0)"
+                      onclick="toggleVoiceRecognition()"
+                    >
+                      <i class="fas fa-microphone me-2"></i>Start Voice Command
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      class="dropdown-item"
+                      href="javascript:void(0)"
+                      onclick="showVoiceHelp()"
+                    >
+                      <i class="fas fa-question-circle me-2"></i>Help Commands
+                    </a>
+                  </li>
+                </ul>
+              </li>
+              <!-- Account Management Dropdown -->
+              <li class="nav-item dropdown">
+                <a
+                  class="nav-link dropdown-toggle text-white"
+                  href="#"
+                  id="accountDropdown"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  title="Account"
+                >
+                  <i class="fas fa-user-circle"></i>
+                  <span class="ms-2">Account</span>
+                </a>
+                <ul
+                  class="dropdown-menu dropdown-menu-dark"
+                  aria-labelledby="accountDropdown"
+                >
+                  <li>
+                    <a class="dropdown-item" href="{% url 'force_reauth' %}"
+                      ><i class="fas fa-exchange-alt me-2"></i>Switch Account</a
+                    >
+                  </li>
+                  <li><hr class="dropdown-divider" /></li>
+                  <li>
+                    <a class="dropdown-item" href="{% url 'logout' %}"
+                      ><i class="fas fa-sign-out-alt me-2"></i>Logout</a
+                    >
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <!-- Main Content -->
+        <div class="col-md-11 col-lg-11 ms-auto main-content">
+          <div class="p-2 p-md-4">
+            <!-- Voice Feedback UI -->
+            <div
+              id="voice-feedback"
+              class="position-fixed top-0 start-50 translate-middle-x mt-3"
+              style="display: none; z-index: 1050"
+            >
+              <div class="card">
+                <div class="card-body py-2 px-3">
+                  <div class="d-flex align-items-center">
+                    <div
+                      class="spinner-border spinner-border-sm me-2"
+                      id="voice-spinner"
+                      style="display: none"
+                    ></div>
+                    <span id="voice-status">Listening...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h2 class="fw-bold">Gmail Email Assistant</h2>
+                <p class="text-muted mb-0">AI-powered email management</p>
+              </div>
+              <div class="d-flex align-items-center">
+                <div id="user-info" class="me-3 text-end" style="display: none">
+                  <div class="fw-bold" id="user-email"></div>
+                  <small class="text-muted" id="user-gmail"></small>
+                </div>
+                <!-- Account Actions Dropdown -->
+                <div class="dropdown me-2">
+                  <button
+                    class="btn btn-outline-secondary dropdown-toggle"
+                    type="button"
+                    id="accountActionsDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <i class="fas fa-user-circle"></i> Account
+                  </button>
+                  <ul
+                    class="dropdown-menu dropdown-menu-end"
+                    aria-labelledby="accountActionsDropdown"
+                  >
+                    <li>
+                      <a class="dropdown-item" href="{% url 'force_reauth' %}"
+                        ><i class="fas fa-exchange-alt me-2"></i>Switch Google
+                        Account</a
+                    >
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="{% url 'force_reauth' %}"
+                        ><i class="fas fa-calendar-alt me-2"></i>Grant Calendar
+                        Access</a
+                    >
+                    </li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li>
+                      <a class="dropdown-item" href="{% url 'logout' %}"
+                        ><i class="fas fa-sign-out-alt me-2"></i>Logout</a
+                    >
+                    </li>
+                  </ul>
+                </div>
+                <button class="btn btn-info" id="theme-button">
+                  Toggle Theme
+                </button>
+              </div>
+            </div>
+            <!-- Authentication Section -->
+            <div id="auth-section" class="mb-3" style="display: none">
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                You need to authenticate with Gmail first
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <button
+                  id="auth-btn"
+                  class="btn btn-primary"
+                  onclick="window.location.href='/oauth/start/'"
+                >
+                  <i class="fab fa-google me-2"></i>Connect Gmail
+                </button>
+                <button
+                  id="switch-account-btn"
+                  class="btn btn-warning"
+                  onclick="window.location.href='{% url 'force_reauth' %}'"
+                  style="display: none"
+                >
+                  <i class="fas fa-exchange-alt me-2"></i>Switch Account
+                </button>
+              </div>
+            </div>
+            <!-- Django Messages -->
+            {% if messages %}
+            <div class="mb-3">
+              {% for message in messages %}
+              <div
+                class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                role="alert"
+              >
+                {{ message }}
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="alert"
+                  aria-label="Close"
+                ></button>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Inbox Section -->
+            <div id="inbox-section" class="section-content active">
+              <div class="row">
+                <!-- Unread Emails Section (More Space) -->
+                <div class="col-md-5 col-lg-5 mb-4 mb-md-0 email-section">
+                  <div class="card h-100">
+                    <div
+                      class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+                    >
+                      <h5 class="mb-0" id="section-title">Unread Emails</h5>
+                      <span class="badge bg-light text-dark" id="email-count"
+                        >0</span
+                      >
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                      <div
+                        class="d-flex justify-content-between align-items-center mb-3"
+                      >
+                        <div class="d-flex align-items-center">
+                          <div class="form-check me-3">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="select-all-emails"
+                            />
+                            <label
+                              class="form-check-label"
+                              for="select-all-emails"
+                            >
+                              Select All
+                            </label>
+                          </div>
+                          <div class="d-flex align-items-center">
+                            <label class="form-label mb-0 me-2">Show:</label>
+                            <select
+                              id="per-page-select"
+                              class="form-select form-select-sm"
+                              style="width: auto"
+                            >
+                              <option value="5">5</option>
+                              <option value="10" selected>10</option>
+                              <option value="20">20</option>
+                              <option value="50">50</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <button
+                            class="btn btn-sm btn-success"
+                            id="bulk-mark-read"
+                            style="display: none"
+                          >
+                            <i class="fas fa-check me-1"></i> Mark Selected as
+                            Read
+                          </button>
+                        </div>
+                      </div>
+                      <div id="emails" class="mb-3 email-list flex-grow-1">
+                        <div class="text-center p-4 text-muted">
+                          <i class="fas fa-envelope-open-text fa-2x mb-3"></i>
+                          <p>Click refresh to load emails</p>
+                        </div>
+                      </div>
+                      <div
+                        id="emails-loading"
+                        class="text-center p-4"
+                        style="display: none"
+                      >
+                        <div class="spinner-border text-primary mb-2"></div>
+                        <p class="text-muted">Loading emails...</p>
+                      </div>
+                      <button
+                        id="load"
+                        class="btn btn-primary w-100"
+                        onclick="loadEmails(1)"
+                        aria-label="Refresh emails"
+                      >
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                      </button>
+                      <div id="pagination" class="mt-3"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Generate Reply Section (More Space) -->
+                <div class="col-md-7 col-lg-7 email-section">
+                  <div class="card h-100">
+                    <div class="card-header bg-success text-white">
+                      <h5 class="mb-0">Generate Reply (Gemini)</h5>
+                    </div>
+                    <div
+                      class="card-body d-flex flex-column generate-reply-section"
+                    >
+                      <div class="mb-2 flex-grow-1">
+                        <label class="form-label">Email Text</label>
+                        <textarea
+                          id="email_text"
+                          class="form-control email-text-extended"
+                          rows="15"
+                          placeholder="Paste email content here..."
+                        ></textarea>
+                      </div>
+                      <!-- Tone selector with minimal spacing -->
+                      <div class="tone-selector-container mb-0">
+                        <label class="form-label">Reply Tone</label>
+                        <select id="reply_tone" class="form-select">
+                          <option value="professional">Professional</option>
+                          <option value="casual">Casual</option>
+                          <option value="friendly">Friendly</option>
+                          <option value="formal">Formal</option>
+                          <option value="apologetic">Apologetic</option>
+                        </select>
+                      </div>
+                      <!-- Buttons container with minimal spacing -->
+                      <div class="buttons-container d-flex mb-1">
+                        <button
+                          id="gen"
+                          class="btn btn-success flex-fill compact-btn"
+                          onclick="generateReply()"
+                        >
+                          <i class="fas fa-robot me-2"></i>Summarize & Generate
+                        </button>
+                        <button
+                          id="gen-tone"
+                          class="btn btn-success flex-fill compact-btn"
+                          onclick="generateToneReply()"
+                        >
+                          <i class="fas fa-robot me-2"></i>Generate with Tone
+                        </button>
+                      </div>
+                      <div
+                        id="reply-loading"
+                        class="text-center mt-1"
+                        style="display: none"
+                      >
+                        <div class="spinner-border text-success me-2"></div>
+                        <span>Generating reply...</span>
+                      </div>
+                      <div class="row">
+                        <div class="col-md-6">
+                          <div class="mb-2">
+                            <label class="form-label">Summary</label>
+                            <textarea
+                              id="summary"
+                              class="form-control"
+                              rows="5"
+                              readonly
+                            ></textarea>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="mb-2">
+                            <label class="form-label">Generated Reply</label>
+                            <textarea
+                              id="generated_reply"
+                              class="form-control"
+                              rows="5"
+                              readonly
+                            ></textarea>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Important Section -->
+            <div id="important-section" class="section-content">
+              <div class="card">
+                <div
+                  class="card-header bg-warning text-white d-flex justify-content-between align-items-center"
+                >
+                  <h5 class="mb-0">Important Emails</h5>
+                  <span class="badge bg-light text-dark" id="important-count"
+                    >0</span
+                  >
+                </div>
+                <div class="card-body">
+                  <div id="important-emails-container">
+                    <div class="text-center p-4 text-muted">
+                      <i class="fas fa-star fa-2x mb-3"></i>
+                      <p>
+                        No important emails found. Mark emails as important to
+                        see them here.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    id="important-emails-loading"
+                    class="text-center p-4"
+                    style="display: none"
+                  >
+                    <div class="spinner-border text-warning mb-2"></div>
+                    <p class="text-muted">Loading important emails...</p>
+                  </div>
+                  <button
+                    id="load-important"
+                    class="btn btn-warning w-100"
+                    onclick="loadImportantEmails()"
+                  >
+                    <i class="fas fa-sync-alt me-2"></i>Refresh Important Emails
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Drafts Section -->
+            <div id="drafts-section" class="section-content">
+              <div class="card">
+                <div
+                  class="card-header bg-info text-white d-flex justify-content-between align-items-center"
+                >
+                  <h5 class="mb-0">My Drafts</h5>
+                  <span class="badge bg-light text-dark" id="draft-count"
+                    >0</span
+                  >
+                </div>
+                <div class="card-body">
+                  <div id="drafts-container">
+                    <div class="text-center p-4 text-muted">
+                      <i class="fas fa-file-alt fa-2x mb-3"></i>
+                      <p>
+                        No drafts found. Create a draft using the "Save Draft to
+                        Gmail" section below.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    id="drafts-loading"
+                    class="text-center p-4"
+                    style="display: none"
+                  >
+                    <div class="spinner-border text-info mb-2"></div>
+                    <p class="text-muted">Loading drafts...</p>
+                  </div>
+                  <button
+                    id="load-drafts"
+                    class="btn btn-info w-100"
+                    onclick="loadDrafts()"
+                  >
+                    <i class="fas fa-sync-alt me-2"></i>Refresh Drafts
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings-section" class="section-content">
+              <div class="card">
+                <div class="card-header bg-secondary text-white">
+                  <h5 class="mb-0">Settings</h5>
+                </div>
+                <div class="card-body">
+                  <form id="settings-form">
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="reply-tone-setting" class="form-label"
+                            >Default Reply Tone</label
+                          >
+                          <select id="reply-tone-setting" class="form-select">
+                            <option value="professional">Professional</option>
+                            <option value="friendly">Friendly</option>
+                            <option value="casual">Casual</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="refresh-interval" class="form-label"
+                            >Email Refresh Interval (minutes)</label
+                          >
+                          <input
+                            type="number"
+                            class="form-control"
+                            id="refresh-interval"
+                            min="1"
+                            max="60"
+                            value="5"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="mb-3 form-check">
+                          <input
+                            type="checkbox"
+                            class="form-check-input"
+                            id="auto-reply-enabled"
+                          />
+                          <label
+                            class="form-check-label"
+                            for="auto-reply-enabled"
+                          >
+                            Enable Auto-Reply
+                          </label>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label for="theme-setting" class="form-label"
+                            >Theme</label
+                          >
+                          <select id="theme-setting" class="form-select">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                      <button
+                        type="button"
+                        class="btn btn-secondary me-2"
+                        onclick="resetSettings()"
+                      >
+                        Reset
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-primary"
+                        onclick="saveSettings()"
+                      >
+                        Save Settings
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Save Draft Section -->
+            <div class="card mt-4">
+              <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Save Draft to Gmail</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">To</label>
+                      <input
+                        type="email"
+                        id="to"
+                        class="form-control"
+                        placeholder="Recipient email"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Subject</label>
+                      <input
+                        type="text"
+                        id="subject"
+                        class="form-control"
+                        placeholder="Email subject"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Message</label>
+                  <textarea
+                    id="draft_message"
+                    class="form-control"
+                    rows="5"
+                    placeholder="Your message here..."
+                  ></textarea>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <button id="save" class="btn btn-info" onclick="saveDraft()">
+                    <i class="fas fa-save me-2"></i>Save Draft to Gmail
+                  </button>
+                  <div id="saveStatus"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Voice Help Modal -->
+    <div
+      class="modal fade"
+      id="voiceHelpModal"
+      tabindex="-1"
+      aria-labelledby="voiceHelpModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="voiceHelpModalLabel">
+              Voice Commands Help
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="text-center mb-3">
+              <p class="lead">Available Voice Commands</p>
+              <p class="text-muted">Click on any command to hear it spoken</p>
+            </div>
+            <div id="voice-commands-list" class="list-group">
+              <!-- Commands will be populated here by JavaScript -->
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="speakAllCommands()"
+            >
+              <i class="fas fa-volume-up me-2"></i>Speak All Commands
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Schedule Meeting Modal -->
+    <div
+      class="modal fade"
+      id="scheduleMeetingModal"
+      tabindex="-1"
+      aria-labelledby="scheduleMeetingModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="scheduleMeetingModalLabel">
+              Schedule Meeting
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="scheduleMeetingForm">
+              <input type="hidden" id="meeting-email-id" name="email_id" />
+              <div class="mb-3">
+                <label for="meeting-title" class="form-label">Title</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="meeting-title"
+                  name="title"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="meeting-description" class="form-label"
+                  >Description</label
+                >
+                <textarea
+                  class="form-control"
+                  id="meeting-description"
+                  name="description"
+                  rows="3"
+                ></textarea>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="meeting-start-date" class="form-label"
+                      >Start Date</label
+                    >
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="meeting-start-date"
+                      name="start_date"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="meeting-start-time" class="form-label"
+                      >Start Time</label
+                    >
+                    <input
+                      type="time"
+                      class="form-control"
+                      id="meeting-start-time"
+                      name="start_time"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="meeting-end-date" class="form-label"
+                      >End Date</label
+                    >
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="meeting-end-date"
+                      name="end_date"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="meeting-end-time" class="form-label"
+                      >End Time</label
+                    >
+                    <input
+                      type="time"
+                      class="form-control"
+                      id="meeting-end-time"
+                      name="end_time"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="meeting-attendees" class="form-label"
+                  >Attendees (comma separated emails)</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="meeting-attendees"
+                  name="attendees"
+                />
+              </div>
+              <!-- Meeting Reminder Options -->
+              <div class="mb-3">
+                <label class="form-label">Reminders</label>
+                <div class="form-check mb-2">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    id="default-reminders"
+                    name="reminder-option"
+                    value="default"
+                    checked
+                  />
+                  <label class="form-check-label" for="default-reminders"
+                    >Use default reminders</label
+                  >
+                </div>
+                <div class="form-check mb-2">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    id="custom-reminders"
+                    name="reminder-option"
+                    value="custom"
+                  />
+                  <label class="form-check-label" for="custom-reminders"
+                    >Set custom reminders</label
+                  >
+                </div>
+                <div id="custom-reminder-options" style="display: none">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          id="reminder-10"
+                          name="reminders"
+                          value="10"
+                        />
+                        <label class="form-check-label" for="reminder-10"
+                          >10 minutes before</label
+                        >
+                      </div>
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          id="reminder-30"
+                          name="reminders"
+                          value="30"
+                        />
+                        <label class="form-check-label" for="reminder-30"
+                          >30 minutes before</label
+                        >
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          id="reminder-60"
+                          name="reminders"
+                          value="60"
+                        />
+                        <label class="form-check-label" for="reminder-60"
+                          >1 hour before</label
+                        >
+                      </div>
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          id="reminder-1440"
+                          name="reminders"
+                          value="1440"
+                        />
+                        <label class="form-check-label" for="reminder-1440"
+                          >1 day before</label
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="scheduleMeeting()"
+            >
+              Schedule Meeting
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="notification-toast"
+        class="toast"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="toast-header">
+          <strong class="me-auto">Email Assistant</strong>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="alert"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="toast-body">
+          <!-- Notification message will go here -->
+        </div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <footer class="mt-5 py-3 text-center text-muted">
+      <div class="container">
+        <p class="mb-0">© 2025 Gmail Email Assistant. All rights reserved.</p>
+      </div>
+    </footer>
+    <!-- Bootstrap + Main JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'inbox/main.js' %}"></script>
+    <script>
+      // Initialize when DOM is loaded
+      document.addEventListener("DOMContentLoaded", function () {
+        // Set up observer for dynamically added emails
+        const emailsContainer = document.getElementById("emails");
+        if (emailsContainer) {
+          const observer = new MutationObserver(function (mutations) {
+            // Update theme for mark as read buttons when new emails are added
+            updateMarkAsReadButtonsTheme();
+            // Update star buttons visibility
+            updateStarButtonsVisibility();
+          });
+          observer.observe(emailsContainer, {
+            childList: true,
+            subtree: true,
+          });
+        }
+        // Set up reminder options toggle
+        const defaultRemindersRadio =
+          document.getElementById("default-reminders");
+        const customRemindersRadio =
+          document.getElementById("custom-reminders");
+        const customReminderOptions = document.getElementById(
+          "custom-reminder-options"
+        );
+        if (defaultRemindersRadio && customRemindersRadio) {
+          defaultRemindersRadio.addEventListener("change", function () {
+            customReminderOptions.style.display = this.checked
+              ? "none"
+              : "block";
+          });
+          customRemindersRadio.addEventListener("change", function () {
+            customReminderOptions.style.display = this.checked
+              ? "block"
+              : "none";
+          });
+        }
+
+        // Load user settings
+        loadUserSettings();
+        
+        // Initialize star buttons visibility
+        updateStarButtonsVisibility();
+        
+        // Force star buttons to be visible every 500ms for the first 5 seconds
+        let forceVisibilityCount = 0;
+        const forceVisibilityInterval = setInterval(() => {
+          updateStarButtonsVisibility();
+          forceVisibilityCount++;
+          if (forceVisibilityCount >= 10) {
+            clearInterval(forceVisibilityInterval);
+          }
+        }, 500);
+      });
+
+      // Function to update star buttons visibility
+      function updateStarButtonsVisibility() {
+        const starButtons = document.querySelectorAll('.star-btn');
+        starButtons.forEach(button => {
+          // Force visibility and opacity
+          button.style.visibility = 'visible';
+          button.style.opacity = '1';
+          
+          // Ensure proper styling based on theme
+          if (document.body.classList.contains('dark-theme')) {
+            button.classList.add('dark-theme-star');
+          } else {
+            button.classList.remove('dark-theme-star');
+          }
+          
+          // Force background color to be applied
+          if (button.classList.contains('active')) {
+            button.style.backgroundColor = '#ffc107';
+            button.style.borderColor = '#ffc107';
+            button.style.color = '#000';
+            // Ensure star icon is white
+            const starIcon = button.querySelector('i');
+            if (starIcon) {
+              starIcon.style.color = 'white';
+            }
+          } else {
+            if (document.body.classList.contains('dark-theme')) {
+              button.style.backgroundColor = '#495057';
+              button.style.borderColor = '#6c757d';
+              button.style.color = '#adb5bd';
+            } else {
+              button.style.backgroundColor = '#f8f9fa';
+              button.style.borderColor = '#dee2e6';
+              button.style.color = '#6c757d';
+            }
+            // Reset star icon color
+            const starIcon = button.querySelector('i');
+            if (starIcon) {
+              starIcon.style.color = '';
+            }
+          }
+        });
+      }
+
+      // Function to show different sections
+      function showSection(sectionName) {
+        // Hide all sections
+        document.querySelectorAll(".section-content").forEach((section) => {
+          section.classList.remove("active");
+        });
+
+        // Remove active class from all nav links
+        document.querySelectorAll(".nav-link").forEach((link) => {
+          link.classList.remove("active");
+        });
+
+        // Show selected section
+        document
+          .getElementById(`${sectionName}-section`)
+          .classList.add("active");
+
+        // Add active class to clicked nav link
+        event.target.closest(".nav-link").classList.add("active");
+
+        // Load section-specific content
+        if (sectionName === "drafts") {
+          loadDrafts();
+        } else if (sectionName === "important") {
+          loadImportantEmails();
+        } else if (sectionName === "settings") {
+          // Settings are already loaded
+        }
+      }
+
+      // Function to load drafts - UPDATED TO CALL /drafts/ INSTEAD OF /generated-drafts/
+      function loadDrafts() {
+        const draftsContainer = document.getElementById("drafts-container");
+        const draftsLoading = document.getElementById("drafts-loading");
+        const loadDraftsBtn = document.getElementById("load-drafts");
+
+        // Show loading
+        draftsContainer.style.display = "none";
+        draftsLoading.style.display = "block";
+        loadDraftsBtn.disabled = true;
+
+        // Fetch drafts from API - UPDATED TO CALL /drafts/ (Gmail drafts)
+        fetch("/drafts/")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ok) {
+              renderDrafts(data.drafts);
+              document.getElementById("draft-count").textContent =
+                data.total_drafts || data.drafts.length;
+            } else {
+              draftsContainer.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+            }
+          })
+          .catch((error) => {
+            console.error("Error loading drafts:", error);
+            draftsContainer.innerHTML = `<div class="alert alert-danger">Error loading drafts: ${error.message}</div>`;
+          })
+          .finally(() => {
+            draftsContainer.style.display = "block";
+            draftsLoading.style.display = "none";
+            loadDraftsBtn.disabled = false;
+          });
+      }
+
+      // Function to render drafts - UPDATED FOR GMAIL DRAFTS
+      function renderDrafts(drafts) {
+        const draftsContainer = document.getElementById("drafts-container");
+
+        if (!drafts || drafts.length === 0) {
+          draftsContainer.innerHTML = `
+            <div class="text-center p-4 text-muted">
+              <i class="fas fa-file-alt fa-2x mb-3"></i>
+              <p>No drafts found. Create a draft using the "Save Draft to Gmail" section below.</p>
+            </div>
+          `;
+          return;
+        }
+
+        draftsContainer.innerHTML = "";
+
+        drafts.forEach((draft) => {
+          const draftElement = document.createElement("div");
+          draftElement.className = "draft-item card mb-2";
+          draftElement.innerHTML = `
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="card-title mb-0">${draft.subject}</h6>
+                <div class="dropdown">
+                  <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" onclick="viewDraft('${
+                      draft.id
+                    }')">
+                      <i class="fas fa-eye me-2"></i>View</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="editDraft('${
+                      draft.id
+                    }')">
+                      <i class="fas fa-edit me-2"></i>Edit</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteGmailDraft('${
+                      draft.id
+                    }')">
+                      <i class="fas fa-trash me-2"></i>Delete</a></li>
+                  </ul>
+                </div>
+              </div>
+              <p class="card-text text-muted small mb-1">
+                <strong>To:</strong> ${draft.from}
+              </p>
+              <p class="card-text text-muted small mb-2">
+                <strong>Date:</strong> ${new Date(draft.date).toLocaleString()}
+              </p>
+              <p class="card-text">${draft.snippet}</p>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <button class="btn btn-sm btn-primary" onclick="sendGmailDraft('${
+                  draft.id
+                }')">
+                  <i class="fas fa-paper-plane me-1"></i>Send
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="copyDraftContent('${
+                  draft.id
+                }')">
+                  <i class="fas fa-copy me-1"></i>Copy Content
+                </button>
+              </div>
+            </div>
+          `;
+          draftsContainer.appendChild(draftElement);
+        });
+      }
+
+      // NEW: Function to delete Gmail draft
+      function deleteGmailDraft(draftId) {
+        if (confirm("Are you sure you want to delete this draft?")) {
+          fetch(`/draft/${draftId}/delete/`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCSRFToken(),
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.ok) {
+                showNotification("Draft deleted successfully!", "success");
+                loadDrafts(); // Refresh drafts list
+              } else {
+                showNotification("Error: " + data.error, "error");
+              }
+            })
+            .catch((error) => {
+              showNotification(
+                "Error deleting draft: " + error.message,
+                "error"
+              );
+            });
+        }
+      }
+
+      // NEW: Function to view draft details
+      function viewDraft(draftId) {
+        fetch(`/draft/${draftId}/`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ok) {
+              const draft = data.draft;
+              // Show draft content in a modal or alert for now
+              alert(
+                `Subject: ${draft.subject}\n\nTo: ${draft.to}\n\n${draft.body}`
+              );
+            } else {
+              showNotification("Error: " + data.error, "error");
+            }
+          })
+          .catch((error) => {
+            showNotification("Error viewing draft: " + error.message, "error");
+          });
+      }
+
+      // NEW: Function to send Gmail draft
+      function sendGmailDraft(draftId) {
+        if (confirm("Are you sure you want to send this draft?")) {
+          // This would typically involve getting the draft details and sending it
+          // For now, we'll show a notification
+          showNotification(
+            "Send functionality would be implemented here",
+            "info"
+          );
+        }
+      }
+
+      // NEW: Function to copy draft content
+      function copyDraftContent(draftId) {
+        fetch(`/draft/${draftId}/`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ok) {
+              const draft = data.draft;
+              navigator.clipboard
+                .writeText(draft.body)
+                .then(() => {
+                  showNotification(
+                    "Draft content copied to clipboard!",
+                    "success"
+                  );
+                })
+                .catch(() => {
+                  showNotification("Failed to copy to clipboard", "error");
+                });
+            } else {
+              showNotification("Error: " + data.error, "error");
+            }
+          })
+          .catch((error) => {
+            showNotification(
+              "Error copying draft content: " + error.message,
+              "error"
+            );
+          });
+      }
+
+      // UPDATED: saveDraft function with notifications and auto-refresh
+      async function saveDraft() {
+        const to = document.getElementById("to").value;
+        const subject = document.getElementById("subject").value;
+        const message = document.getElementById("draft_message").value;
+        const saveStatus = document.getElementById("saveStatus");
+
+        if (!to || !subject || !message) {
+          saveStatus.innerHTML =
+            '<span class="text-danger">Please fill in all fields</span>';
+          return;
+        }
+
+        const saveBtn = document.getElementById("save");
+        saveBtn.disabled = true;
+        saveStatus.innerHTML = '<span class="text-info">Saving...</span>';
+
+        try {
+          const response = await fetch("/save-draft/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCSRFToken(),
+            },
+            body: JSON.stringify({
+              to: to,
+              subject: subject,
+              body: message,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (data.ok) {
+            saveStatus.innerHTML =
+              '<span class="text-success">Draft saved successfully!</span>';
+            showNotification("Draft saved to Gmail!", "success");
+
+            // Clear form
+            document.getElementById("to").value = "";
+            document.getElementById("subject").value = "";
+            document.getElementById("draft_message").value = "";
+
+            // Refresh drafts list
+            loadDrafts();
+          } else {
+            saveStatus.innerHTML = `<span class="text-danger">Error: ${data.error}</span>`;
+          }
+        } catch (error) {
+          saveStatus.innerHTML = `<span class="text-danger">Error: ${error.message}</span>`;
+        } finally {
+          saveBtn.disabled = false;
+        }
+      }
+
+      // Function to load important emails
+      function loadImportantEmails() {
+        const importantContainer = document.getElementById(
+          "important-emails-container"
+        );
+        const importantLoading = document.getElementById(
+          "important-emails-loading"
+        );
+        const loadImportantBtn = document.getElementById("load-important");
+
+        // Show loading
+        importantContainer.style.display = "none";
+        importantLoading.style.display = "block";
+        loadImportantBtn.disabled = true;
+
+        // Fetch important emails from API
+        fetch("/important-emails/")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ok) {
+              renderImportantEmails(data.emails);
+              document.getElementById("important-count").textContent =
+                data.emails.length;
+            } else {
+              importantContainer.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+            }
+          })
+          .catch((error) => {
+            importantContainer.innerHTML = `<div class="alert alert-danger">Error loading important emails: ${error.message}</div>`;
+          })
+          .finally(() => {
+            importantContainer.style.display = "block";
+            importantLoading.style.display = "none";
+            loadImportantBtn.disabled = false;
+          });
+      }
+
+      // Function to render important emails
+      function renderImportantEmails(emails) {
+        const importantContainer = document.getElementById(
+          "important-emails-container"
+        );
+
+        if (emails.length === 0) {
+          importantContainer.innerHTML = `
+            <div class="text-center p-4 text-muted">
+              <i class="fas fa-star fa-2x mb-3"></i>
+              <p>No important emails found. Mark emails as important to see them here.</p>
+            </div>
+          `;
+          return;
+        }
+
+        importantContainer.innerHTML = "";
+
+        emails.forEach((email) => {
+          const emailElement = document.createElement("div");
+          emailElement.className = "email-item card mb-2";
+          emailElement.innerHTML = `
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <h6 class="card-title">${email.subject}</h6>
+                <button class="btn btn-sm mark-read-btn" onclick="markAsRead('${
+                  email.id
+                }')">
+                  <i class="fas fa-check"></i> Mark as Read
+                </button>
+              </div>
+              <p class="card-text text-muted small mb-1">From: ${
+                email.from_field
+              }</p>
+              <p class="card-text">${email.snippet}</p>
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <small class="text-muted">${email.date}</small>
+                <div>
+                  <button class="btn btn-sm btn-outline-secondary me-1" onclick="viewEmail('${
+                    email.id
+                  }')">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="star-btn${email.is_important ? ' active' : ''}" onclick="toggleImportant('${
+                    email.id
+                  }', this)">
+                    <i class="fas fa-star"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          importantContainer.appendChild(emailElement);
+        });
+        
+        // Update star buttons visibility after rendering
+        updateStarButtonsVisibility();
+      }
+
+      // Function to toggle important status
+      function toggleImportant(messageId, buttonElement) {
+        // Find the star icon inside the button
+        const starIcon = buttonElement.querySelector('i');
+        
+        // Toggle the active class on the button
+        buttonElement.classList.toggle('active');
+        
+        // Force button styling
+        if (buttonElement.classList.contains('active')) {
+          buttonElement.style.backgroundColor = '#ffc107';
+          buttonElement.style.borderColor = '#ffc107';
+          buttonElement.style.color = '#000';
+          // Set star icon to white
+          starIcon.style.color = 'white';
+        } else {
+          if (document.body.classList.contains('dark-theme')) {
+            buttonElement.style.backgroundColor = '#495057';
+            buttonElement.style.borderColor = '#6c757d';
+            buttonElement.style.color = '#adb5bd';
+          } else {
+            buttonElement.style.backgroundColor = '#f8f9fa';
+            buttonElement.style.borderColor = '#dee2e6';
+            buttonElement.style.color = '#6c757d';
+          }
+          // Reset star icon color
+          starIcon.style.color = '';
+        }
+        
+        // Make API call to update important status
+        fetch(`/toggle-important/${messageId}/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ok) {
+              showNotification(
+                data.is_important 
+                  ? "Email marked as important!" 
+                  : "Email removed from important!",
+                "success"
+              );
+              
+              // Refresh important emails if we're on that section
+              if (document.getElementById('important-section').classList.contains('active')) {
+                loadImportantEmails();
+              }
+            } else {
+              // Revert UI changes if API call failed
+              buttonElement.classList.toggle('active');
+              
+              // Revert button styling
+              if (buttonElement.classList.contains('active')) {
+                buttonElement.style.backgroundColor = '#ffc107';
+                buttonElement.style.borderColor = '#ffc107';
+                buttonElement.style.color = '#000';
+                // Set star icon to white
+                starIcon.style.color = 'white';
+              } else {
+                if (document.body.classList.contains('dark-theme')) {
+                  buttonElement.style.backgroundColor = '#495057';
+                  buttonElement.style.borderColor = '#6c757d';
+                  buttonElement.style.color = '#adb5bd';
+                } else {
+                  buttonElement.style.backgroundColor = '#f8f9fa';
+                  buttonElement.style.borderColor = '#dee2e6';
+                  buttonElement.style.color = '#6c757d';
+                }
+                // Reset star icon color
+                starIcon.style.color = '';
+              }
+              
+              showNotification("Error: " + data.error, "error");
+            }
+          })
+          .catch((error) => {
+            // Revert UI changes if API call failed
+            buttonElement.classList.toggle('active');
+            
+            // Revert button styling
+            if (buttonElement.classList.contains('active')) {
+              buttonElement.style.backgroundColor = '#ffc107';
+              buttonElement.style.borderColor = '#ffc107';
+              buttonElement.style.color = '#000';
+              // Set star icon to white
+              starIcon.style.color = 'white';
+            } else {
+              if (document.body.classList.contains('dark-theme')) {
+                buttonElement.style.backgroundColor = '#495057';
+                buttonElement.style.borderColor = '#6c757d';
+                buttonElement.style.color = '#adb5bd';
+              } else {
+                buttonElement.style.backgroundColor = '#f8f9fa';
+                buttonElement.style.borderColor = '#dee2e6';
+                buttonElement.style.color = '#6c757d';
+              }
+              // Reset star icon color
+              starIcon.style.color = '';
+            }
+            
+            showNotification(
+              "Error toggling important status: " + error.message,
+              "error"
+            );
+          });
+      }
+
+      // Function to load user settings
+      function loadUserSettings() {
+        fetch("/api/user-settings/")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ok) {
+              const settings = data.settings;
+              document.getElementById("reply-tone-setting").value =
+                settings.reply_tone;
+              document.getElementById("refresh-interval").value =
+                settings.refresh_interval;
+              document.getElementById("auto-reply-enabled").checked =
+                settings.auto_reply_enabled;
+              document.getElementById("theme-setting").value = settings.theme;
+
+              // Apply theme
+              if (settings.theme === "dark") {
+                document.body.classList.add("dark-theme");
+              }
+            }
+          })
+          .catch((error) => {
+            console.error("Error loading user settings:", error);
+          });
+      }
+
+      // Function to save settings
+      function saveSettings() {
+        const settings = {
+          reply_tone: document.getElementById("reply-tone-setting").value,
+          refresh_interval: parseInt(
+            document.getElementById("refresh-interval").value
+          ),
+          auto_reply_enabled:
+            document.getElementById("auto-reply-enabled").checked,
+          theme: document.getElementById("theme-setting").value,
+        };
+
+        fetch("/api/user-settings/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+          body: JSON.stringify(settings),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ok) {
+              showNotification("Settings saved successfully!", "success");
+
+              // Apply theme
+              if (settings.theme === "dark") {
+                document.body.classList.add("dark-theme");
+              } else {
+                document.body.classList.remove("dark-theme");
+              }
+              
+              // Update star buttons visibility after theme change
+              updateStarButtonsVisibility();
+            } else {
+              showNotification("Error: " + data.error, "error");
+            }
+          })
+          .catch((error) => {
+            showNotification(
+              "Error saving settings: " + error.message,
+              "error"
+            );
+          });
+      }
+
+      // Function to reset settings
+      function resetSettings() {
+        if (
+          confirm("Are you sure you want to reset all settings to default?")
+        ) {
+          document.getElementById("reply-tone-setting").value = "professional";
+          document.getElementById("refresh-interval").value = 5;
+          document.getElementById("auto-reply-enabled").checked = true;
+          document.getElementById("theme-setting").value = "light";
+          document.body.classList.remove("dark-theme");
+          
+          // Update star buttons visibility after theme change
+          updateStarButtonsVisibility();
+        }
+      }
+
+      // Function to get CSRF token
+      function getCSRFToken() {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.startsWith("csrftoken=")) {
+            return cookie.substring("csrftoken=".length);
+          }
+        }
+        return null;
+      }
+
+      // Function to show notification
+      function showNotification(message, type = "info") {
+        const toast = document.getElementById("notification-toast");
+        const toastBody = toast.querySelector(".toast-body");
+
+        // Set message
+        toastBody.innerHTML = message;
+
+        // Set toast class based on type
+        toast.className = "toast";
+        if (type === "success") {
+          toast.classList.add("text-bg-success");
+        } else if (type === "error") {
+          toast.classList.add("text-bg-danger");
+        } else if (type === "warning") {
+          toast.classList.add("text-bg-warning");
+        } else {
+          toast.classList.add("text-bg-info");
+        }
+
+        // Show toast
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+      }
+
+      // Function to open schedule meeting modal
+      function openScheduleMeetingModal(email) {
+        console.log("Opening schedule meeting modal for email:", email);
+
+        // Set email ID in hidden field
+        document.getElementById("meeting-email-id").value = email.id;
+
+        // Pre-fill title with email subject
+        document.getElementById("meeting-title").value = email.subject
+          ? `Meeting: ${email.subject}`
+          : "Meeting";
+
+        // Pre-fill description with email snippet
+        document.getElementById("meeting-description").value =
+          email.snippet || "";
+
+        // Extract sender's email and set as an attendee
+        const senderEmail = extractEmailAddress(email.from);
+        if (senderEmail) {
+          document.getElementById("meeting-attendees").value = senderEmail;
+        }
+
+        // Set default dates (today and tomorrow)
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        // Format dates as YYYY-MM-DD
+        const formatDate = (date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          return `${year}-${month}-${day}`;
+        };
+
+        document.getElementById("meeting-start-date").value = formatDate(today);
+        document.getElementById("meeting-end-date").value =
+          formatDate(tomorrow);
+
+        // Set default times
+        document.getElementById("meeting-start-time").value = "09:00";
+        document.getElementById("meeting-end-time").value = "10:00";
+
+        // Show modal
+        const modal = new bootstrap.Modal(
+          document.getElementById("scheduleMeetingModal")
+        );
+        modal.show();
+      }
+
+      // Function to schedule meeting
+      async function scheduleMeeting() {
+        console.log("Scheduling meeting...");
+
+        const form = document.getElementById("scheduleMeetingForm");
+        const formData = new FormData(form);
+
+        // Get form data
+        const emailId = formData.get("email_id");
+        const title = formData.get("title");
+        const description = formData.get("description");
+        const startDate = formData.get("start_date");
+        const startTime = formData.get("start_time");
+        const endDate = formData.get("end_date");
+        const endTime = formData.get("end_time");
+        const attendees = formData.get("attendees");
+
+        // Validate required fields
+        if (!title || !startDate || !startTime || !endDate || !endTime) {
+          showNotification("Please fill in all required fields", "error");
+          return;
+        }
+
+        // Combine date and time
+        const startDatetime = `${startDate}T${startTime}:00`;
+        const endDatetime = `${endDate}T${endTime}:00`;
+
+        // Parse attendees
+        const attendeesList = attendees
+          ? attendees
+              .split(",")
+              .map((email) => email.trim())
+              .filter((email) => email)
+          : [];
+
+        // Get reminders
+        const reminderOption = formData.get("reminder-option");
+        let reminders = [];
+
+        if (reminderOption === "custom") {
+          const reminderCheckboxes = document.querySelectorAll(
+            'input[name="reminders"]:checked'
+          );
+          reminderCheckboxes.forEach((checkbox) => {
+            reminders.push(parseInt(checkbox.value));
+          });
+        }
+
+        try {
+          const csrfToken = getCSRFToken();
+          console.log("CSRF Token:", csrfToken);
+
+          const requestData = {
+            email_id: emailId,
+            title: title,
+            description: description,
+            start_datetime: startDatetime,
+            end_datetime: endDatetime,
+            attendees: attendeesList,
+            reminders: reminders,
+          };
+
+          console.log("Request data:", requestData);
+
+          const response = await fetch("/schedule-meeting/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken,
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          console.log("Response status:", response.status);
+          const data = await response.json();
+          console.log("Response data:", data);
+
+          if (data.ok) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(
+              document.getElementById("scheduleMeetingModal")
+            );
+            modal.hide();
+
+            // Show success message with link to event
+            showNotification(
+              `Meeting scheduled successfully! <a href="${data.html_link}" target="_blank" class="btn btn-sm btn-light ms-2">View in Calendar</a>`,
+              "success"
+            );
+          } else {
+            // Check if re-authentication is needed
+            if (data.needs_reauth) {
+              showNotification(
+                `Calendar access permission required. <a href="/force-reauth/" class="btn btn-sm btn-light ms-2">Re-authenticate Now</a>`,
+                "warning"
+              );
+            } else {
+              showNotification(
+                `Failed to schedule meeting: ${data.error}`,
+                "error"
+              );
+            }
+          }
+        } catch (error) {
+          console.error("Error scheduling meeting:", error);
+          showNotification(
+            `Error scheduling meeting: ${error.message}`,
+            "error"
+          );
+        }
+      }
+
+      // Function to show voice help
+      function showVoiceHelp() {
+        // Fetch voice commands from backend
+        fetch("/api/voice/commands/help")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ok && data.commands) {
+              displayVoiceCommands(data.commands);
+              speakVoiceCommands(data.commands);
+            } else {
+              showNotification("Failed to load voice commands", "error");
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching voice commands:", error);
+            showNotification("Error loading voice commands", "error");
+          });
+      }
+
+      // Function to display voice commands in modal
+      function displayVoiceCommands(commands) {
+        const modal = document.getElementById("voiceHelpModal");
+        const commandsList = document.getElementById("voice-commands-list");
+        // Clear existing commands
+        commandsList.innerHTML = "";
+        // Add each command to the list
+        commands.forEach((cmd) => {
+          const item = document.createElement("div");
+          item.className = "list-group-item list-group-item-action";
+          item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>${cmd.command}</strong>
+                <p class="mb-0 text-muted">${cmd.description}</p>
+              </div>
+              <button class="btn btn-sm btn-outline-primary" onclick="speakText('${cmd.command}')">
+                <i class="fas fa-volume-up"></i>
+              </button>
+            </div>
+          `;
+          commandsList.appendChild(item);
+        });
+        // Show modal
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+      }
+
+      // Function to speak all commands
+      function speakAllCommands() {
+        fetch("/api/voice/commands/help")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.ok && data.commands) {
+              speakVoiceCommands(data.commands);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching voice commands:", error);
+          });
+      }
+
+      // Function to speak voice commands
+      function speakVoiceCommands(commands) {
+        if ("speechSynthesis" in window) {
+          let text = "Available voice commands are: ";
+          commands.forEach((cmd) => {
+            text += `${cmd.command}. `;
+          });
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.9;
+          utterance.pitch = 1;
+          utterance.volume = 1;
+          speechSynthesis.speak(utterance);
+        }
+      }
+
+      // Function to speak specific text
+      function speakText(text) {
+        if ("speechSynthesis" in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.9;
+          utterance.pitch = 1;
+          utterance.volume = 1;
+          speechSynthesis.speak(utterance);
+        }
+      }
+
+      // Function to toggle voice recognition
+      function toggleVoiceRecognition() {
+        console.log("toggleVoiceRecognition called");
+        if (voiceActions) {
+          voiceActions.toggle();
+        } else {
+          console.error("VoiceActions not initialized");
+        }
+      }
+
+      // Function to extract email address from a string
+      function extractEmailAddress(emailString) {
+        const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/;
+        const match = emailString.match(emailRegex);
+        return match ? match[1] : null;
+      }
+    </script>
+  </body>
+</html>
