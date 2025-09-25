@@ -14,9 +14,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY", default="insecure-dev-key")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-# Dynamic ALLOWED_HOSTS for Render
+# Dynamic ALLOWED_HOSTS for Render - FIXED DOMAIN
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-default_hosts = "127.0.0.1,localhost"
+default_hosts = "127.0.0.1,localhost,mini-project-1-j607.onrender.com"
 if RENDER_EXTERNAL_HOSTNAME:
     default_hosts += f",{RENDER_EXTERNAL_HOSTNAME}"
 
@@ -170,8 +170,8 @@ SOCIALACCOUNT_PROVIDERS = {
             "https://www.googleapis.com/auth/calendar.events",
         ],
         "APP": {
-            "client_id": config("GOOGLE_CLIENT_ID", default=""),      # Added default
-            "secret": config("GOOGLE_CLIENT_SECRET", default=""),     # Added default
+            "client_id": config("GOOGLE_CLIENT_ID", default=""),
+            "secret": config("GOOGLE_CLIENT_SECRET", default=""),
             "key": "",
         },
     }
@@ -189,7 +189,7 @@ GOOGLE_CREDENTIALS_BASE64 = config("GOOGLE_CREDENTIALS_BASE64", default=None)
 # --------------------------------------------------------------------
 # GEMINI
 # --------------------------------------------------------------------
-GEMINI_API_KEY = config("GEMINI_API_KEY", default="")  # Changed default to empty string
+GEMINI_API_KEY = config("GEMINI_API_KEY", default="")
 GEMINI_MODEL = config("GEMINI_MODEL", default="gemini-1.5-flash")
 
 if DEBUG:
