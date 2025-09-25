@@ -3,6 +3,15 @@ from pathlib import Path
 from decouple import config
 import dj_database_url
 
+# Explicitly load .env file
+env_path = Path(__file__).resolve().parent / '.env'
+if env_path.exists():
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=env_path)
+    print("✅ .env file loaded successfully")
+else:
+    print("⚠️ .env file not found. Environment variables may not be loaded correctly.")
+
 # --------------------------------------------------------------------
 # BASE DIRECTORY
 # --------------------------------------------------------------------
@@ -14,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY", default="insecure-dev-key")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-# FLEXIBLE ALLOWED_HOSTS - Handles any Render domain variation
+# FLEXIBLE ALLOWED HOSTS - Handles any Render domain variation
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 
 # Base allowed hosts
@@ -305,3 +314,13 @@ DEFAULT_REPLY_TONE = config("DEFAULT_REPLY_TONE", default="professional")
 DEFAULT_REFRESH_INTERVAL = config("DEFAULT_REFRESH_INTERVAL", default=5, cast=int)
 DEFAULT_THEME = config("DEFAULT_THEME", default="light")
 DEFAULT_AUTO_REPLY_ENABLED = config("DEFAULT_AUTO_REPLY_ENABLED", default=True, cast=bool)
+
+# --------------------------------------------------------------------
+# DEBUG: Print environment variables status
+# --------------------------------------------------------------------
+if DEBUG:
+    print(f"DEBUG: {DEBUG}")
+    print(f"GOOGLE_CLIENT_ID: {'SET' if GOOGLE_CLIENT_ID else 'NOT SET'}")
+    print(f"GOOGLE_CLIENT_SECRET: {'SET' if GOOGLE_CLIENT_SECRET else 'NOT SET'}")
+    print(f"GEMINI_API_KEY: {'SET' if GEMINI_API_KEY else 'NOT SET'}")
+    print(f"SECRET_KEY: {'SET' if SECRET_KEY != 'insecure-dev-key' else 'USING DEFAULT'}")
