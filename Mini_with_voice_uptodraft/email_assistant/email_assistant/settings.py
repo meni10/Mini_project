@@ -11,21 +11,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --------------------------------------------------------------------
 # SECURITY
 # --------------------------------------------------------------------
-SECRET_KEY = config("SECRET_KEY", default="insecure-dev-key")  # Make sure to set in production
+SECRET_KEY = config("SECRET_KEY", default="insecure-dev-key")
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS", 
-    default="127.0.0.1,localhost,email-assistant-eh8y.onrender.com"
+    default="127.0.0.1,localhost,mini-project-izr4.onrender.com"
 ).split(",")
 
 # --------------------------------------------------------------------
-# DATABASE
+# DATABASE (Render PostgreSQL)
 # --------------------------------------------------------------------
+# Render automatically provides DATABASE_URL environment variable
 DATABASES = {
-    "default": dj_database_url.config(
-        default=config("DATABASE_URL", default="sqlite:///" + str(BASE_DIR / "db.sqlite3")),
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL', default='sqlite:///db.sqlite3'),
         conn_max_age=600,
-        ssl_require=not DEBUG,  # SSL only required in production
+        ssl_require=True,  # Always require SSL on Render
     )
 }
 
@@ -40,7 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "inbox",  # Your app
-    "django_extensions",  # Extra management tools
+    "django_extensions",
     "rest_framework",
     "django.contrib.sites",
     "allauth",
@@ -56,6 +57,7 @@ SITE_ID = 1
 # --------------------------------------------------------------------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # For static files on Render
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -71,18 +73,18 @@ MIDDLEWARE = [
 # AUTHENTICATION BACKENDS
 # --------------------------------------------------------------------
 AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",  # Default
-    "allauth.account.auth_backends.AuthenticationBackend",  # allauth
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 # --------------------------------------------------------------------
 # SESSION SETTINGS
 # --------------------------------------------------------------------
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
-SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_COOKIE_AGE = 3600
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = True
-SESSION_COOKIE_SECURE = not DEBUG  # Use secure cookies only in production
+SESSION_COOKIE_SECURE = not DEBUG
 
 # --------------------------------------------------------------------
 # URLS / WSGI
@@ -96,7 +98,7 @@ WSGI_APPLICATION = "email_assistant.wsgi.application"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],  # global templates dir
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -127,11 +129,14 @@ USE_I18N = True
 USE_TZ = True
 
 # --------------------------------------------------------------------
-# STATIC FILES (CSS, JS, Images)
+# STATIC FILES (CSS, JS, Images) - Render Configuration
 # --------------------------------------------------------------------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# WhiteNoise configuration for static files on Render
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Create static directories if they don't exist
 os.makedirs(BASE_DIR / "static" / "css", exist_ok=True)
@@ -212,6 +217,17 @@ REST_FRAMEWORK = {
 LOGIN_URL = None
 
 # --------------------------------------------------------------------
+# SECURITY SETTINGS for Production (Render)
+# --------------------------------------------------------------------
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# --------------------------------------------------------------------
 # LOGGING
 # --------------------------------------------------------------------
 LOGGING = {
@@ -233,21 +249,15 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
-        "file": {
-            "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": "email_assistant.log",
-            "formatter": "verbose",
-        },
     },
     "loggers": {
         "inbox": {
-            "handlers": ["console", "file"],
+            "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
         },
         "django": {
-            "handlers": ["console", "file"],
+            "handlers": ["console"],
             "level": "INFO",
             "propagate": False,
         },
@@ -275,6 +285,6 @@ CACHES = {
 # CUSTOM SETTINGS FOR EMAIL ASSISTANT
 # --------------------------------------------------------------------
 DEFAULT_REPLY_TONE = config("DEFAULT_REPLY_TONE", default="professional")
-DEFAULT_REFRESH_INTERVAL = config("DEFAULT_REFRESH_INTERVAL", default=5, cast=int)  # in minutes
+DEFAULT_REFRESH_INTERVAL = config("DEFAULT_REFRESH_INTERVAL", default=5, cast=int)
 DEFAULT_THEME = config("DEFAULT_THEME", default="light")
 DEFAULT_AUTO_REPLY_ENABLED = config("DEFAULT_AUTO_REPLY_ENABLED", default=True, cast=bool)
