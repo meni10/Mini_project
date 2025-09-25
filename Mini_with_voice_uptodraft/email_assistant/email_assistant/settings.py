@@ -13,10 +13,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --------------------------------------------------------------------
 SECRET_KEY = config("SECRET_KEY", default="insecure-dev-key")
 DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS", 
-    default="127.0.0.1,localhost,mini-project-izr4.onrender.com"
-).split(",")
+
+# Dynamic ALLOWED_HOSTS for Render
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+default_hosts = "127.0.0.1,localhost"
+if RENDER_EXTERNAL_HOSTNAME:
+    default_hosts += f",{RENDER_EXTERNAL_HOSTNAME}"
+
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default=default_hosts).split(",")
 
 # --------------------------------------------------------------------
 # DATABASE (Render PostgreSQL)
