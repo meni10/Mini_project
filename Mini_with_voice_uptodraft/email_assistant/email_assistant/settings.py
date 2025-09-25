@@ -14,13 +14,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY", default="insecure-dev-key")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-# Dynamic ALLOWED_HOSTS for Render - FIXED DOMAIN
+# FLEXIBLE ALLOWED_HOSTS - Handles any Render domain variation
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-default_hosts = "127.0.0.1,localhost,mini-project-1-j607.onrender.com"
-if RENDER_EXTERNAL_HOSTNAME:
-    default_hosts += f",{RENDER_EXTERNAL_HOSTNAME}"
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default=default_hosts).split(",")
+# Base allowed hosts
+default_hosts = [
+    "127.0.0.1", 
+    "localhost",
+    ".onrender.com"  # Allows ANY subdomain of onrender.com
+]
+
+# Add specific domains if provided
+if RENDER_EXTERNAL_HOSTNAME:
+    default_hosts.append(RENDER_EXTERNAL_HOSTNAME)
+
+# Add any domains from environment variable
+env_hosts = config("ALLOWED_HOSTS", default="")
+if env_hosts:
+    default_hosts.extend(env_hosts.split(","))
+
+ALLOWED_HOSTS = default_hosts
 
 # --------------------------------------------------------------------
 # DATABASE (Render PostgreSQL)
