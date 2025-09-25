@@ -166,8 +166,8 @@ SOCIALACCOUNT_PROVIDERS = {
             "https://www.googleapis.com/auth/calendar.events",
         ],
         "APP": {
-            "client_id": config("GOOGLE_CLIENT_ID"),
-            "secret": config("GOOGLE_CLIENT_SECRET"),
+            "client_id": config("GOOGLE_CLIENT_ID", default=""),      # Added default
+            "secret": config("GOOGLE_CLIENT_SECRET", default=""),     # Added default
             "key": "",
         },
     }
@@ -185,7 +185,7 @@ GOOGLE_CREDENTIALS_BASE64 = config("GOOGLE_CREDENTIALS_BASE64", default=None)
 # --------------------------------------------------------------------
 # GEMINI
 # --------------------------------------------------------------------
-GEMINI_API_KEY = config("GEMINI_API_KEY", default=None)
+GEMINI_API_KEY = config("GEMINI_API_KEY", default="")  # Changed default to empty string
 GEMINI_MODEL = config("GEMINI_MODEL", default="gemini-1.5-flash")
 
 if DEBUG:
