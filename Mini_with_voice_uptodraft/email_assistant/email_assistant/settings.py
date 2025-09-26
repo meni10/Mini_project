@@ -66,14 +66,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "inbox",  # Your app
-    "django_extensions",
-    "rest_framework",
-    "django.contrib.sites",
+    "django.contrib.sites",  # Should come before allauth
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
+    "django_extensions",
+    "rest_framework",
+    "inbox",  # Your app
 ]
 
 SITE_ID = 1
@@ -324,3 +324,13 @@ if DEBUG:
     print(f"GOOGLE_CLIENT_SECRET: {'SET' if GOOGLE_CLIENT_SECRET else 'NOT SET'}")
     print(f"GEMINI_API_KEY: {'SET' if GEMINI_API_KEY else 'NOT SET'}")
     print(f"SECRET_KEY: {'SET' if SECRET_KEY != 'insecure-dev-key' else 'USING DEFAULT'}")
+
+# --------------------------------------------------------------------
+# RENDER-SPECIFIC SETTINGS
+# --------------------------------------------------------------------
+# Ensure we're using the correct WSGI application for Render
+if not DEBUG:
+    # Production-specific settings for Render
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
